@@ -1,0 +1,5 @@
+bin/
+.idea
+.env
+.golangci.pipeline.yaml
+.pre-commit-config.yaml
