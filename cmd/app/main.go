@@ -1,7 +1,10 @@
 package main
 
-import "fmt"
+import (
+	"github.com/Nol1feee/birthday-notifier/config"
+	"github.com/Nol1feee/birthday-notifier/internal/app"
+)
 
 func main() {
-	fmt.Println("rutube, привет!")
+	app.Run(config.New())
 }
