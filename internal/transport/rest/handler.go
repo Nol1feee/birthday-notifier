@@ -1,13 +1,31 @@
 package rest
 
 import (
+	"fmt"
+
 	"github.com/gin-gonic/gin"
 
 	"github.com/Nol1feee/birthday-notifier/internal/service"
 )
 
+var (
+	incorrectInputData = fmt.Sprintf(
+		"Проверяющий из rutube, данные некорректны. Требования следующие:<br>" +
+			"1. дата рождения соответствует формату 2002-10-31 (год-месяц-день) и ты старше 16 лет.<br>" +
+			"2. имя и фамилия содержат от 2 до 25 символов.<br>" +
+			"3. поле email валидируется, так что сервис ожидает стандартный формат email'a!<br>",
+	)
+	userCreated    = "Сотрудник успешно добавлен в БД!"
+	userDeleted    = "Сотрудник успешно удален!"
+	incorrectEmail = "Некорректный формал email адреса"
+)
+
 type Handler struct {
-	service.Users
+	usersService *service.Users
+}
+
+func NewHandler(usersService *service.Users) *Handler {
+	return &Handler{usersService: usersService}
 }
 
 func (h *Handler) InitRouter() *gin.Engine {
@@ -17,8 +35,8 @@ func (h *Handler) InitRouter() *gin.Engine {
 	api := r.Group("/api")
 	{
 		api.POST("/create-employee", h.createUser)
-		api.DELETE("/delete-employee/:id")
-		api.GET("/all-employees")
+		api.DELETE("/delete-employee/:email", h.deleteUser)
+		api.GET("/all-employees", h.getAllUsers)
 		//внутренняя логика - поздравление с ДР именинника
 
 		//api.POST("/subscription-all")        //с настройкой кол-ва дней до др
