@@ -1,14 +1,13 @@
 package app
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
 	"time"
 
-	_ "github.com/golang-migrate/migrate/v4/source/file"
-	_ "github.com/lib/pq"
 	"github.com/robfig/cron/v3"
 	"go.uber.org/zap"
 
@@ -23,58 +22,60 @@ import (
 func Run(cfg *config.Config) {
 	logger.Debug("cfg info", zap.String("cfg", fmt.Sprintf("%+v", cfg)))
 
-	/*INIT pg db */
+	/* INIT pg db */
 	db, err := postgres.NewPostgresConnection(cfg.DB)
 	if err != nil {
 		logger.Fatal("error connecting to database", zap.Error(err))
 	}
-
 	defer db.Close()
 	logger.Info("DB connected")
 
 	postgres.MigrateDB(db, cfg.DB)
 
-	/*INIT services*/
+	/* INIT services */
 	usersRepo := psql.NewUsers(db)
 	usersService := service.NewUsers(usersRepo)
 	notifierService := service.NewNotifier(cfg.Email, usersRepo)
+	notifierService.NotifyingUpcomingBirthdays()
+
 	handler := rest.NewHandler(usersService)
 
-	/*INIT http server */
+	/* INIT http server */
 	srv := &http.Server{
 		Addr:              fmt.Sprintf("%s:%d", cfg.HTTP.Host, cfg.HTTP.Port),
 		Handler:           handler.InitRouter(),
 		ReadHeaderTimeout: 0,
 	}
 
-	logger.Info(fmt.Sprintf(srv.Addr))
+	logger.Info(fmt.Sprintf("Starting HTTP server at %s", srv.Addr))
 
-	/*INIT cron notifier */
+	/* INIT cron notifier */
 	c := cron.New(cron.WithLocation(time.FixedZone("MSK", 3*60*60)))
-
 	_, err = c.AddFunc("0 7 * * *", func() {
-		err := notifierService.CongratulateAll()
-		if err != nil {
-			logger.Error(err.Error())
+		if err := notifierService.CongratulateAll(); err != nil {
+			logger.Error("Error in CongratulateAll", zap.Error(err))
+		}
+		if err := notifierService.NotifyingUpcomingBirthdays(); err != nil {
+			logger.Error("Error in NotifyingUpcomingBirthdays", zap.Error(err))
 		}
 	})
 
 	if err != nil {
-		logger.Error("Ошибка при отправке email'ов", zap.Error(err))
+		logger.Error("Error scheduling cron job", zap.Error(err))
+		return
 	}
 
-	go func() {
-		c.Start()
-		logger.Info("cron service started")
-		defer c.Stop()
+	c.Start()
+	defer c.Stop()
 
+	go func() {
+		logger.Info("cron service started")
 		select {}
 	}()
 
-	/*RUN http server */
 	go func() {
-		if err := srv.ListenAndServe(); err != nil {
-			logger.Fatal(err.Error())
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			logger.Fatal("HTTP server error", zap.Error(err))
 		}
 	}()
 
@@ -83,6 +84,14 @@ func Run(cfg *config.Config) {
 
 	<-quit
 
-	//нормально обработать grace -> srv.shutdown и тд
-	logger.Info("signal received to end the program")
+	logger.Info("Shutdown signal received, shutting down gracefully...")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	if err := srv.Shutdown(ctx); err != nil {
+		logger.Fatal("HTTP server forced to shutdown", zap.Error(err))
+	}
+
+	logger.Info("HTTP server stopped successfully")
 }

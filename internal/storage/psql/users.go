@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"fmt"
 
+	"github.com/lib/pq"
+
 	"github.com/Nol1feee/birthday-notifier/internal/domain"
 	"github.com/Nol1feee/birthday-notifier/internal/storage"
 )
@@ -41,7 +43,7 @@ func (u *Users) GetAllUsers() ([]domain.User, error) {
 		return nil, err
 	}
 
-	rows, err := u.db.Query("SELECT first_name, last_name, email, birth_date from employees")
+	rows, err := u.db.Query("SELECT id, first_name, last_name, email, birth_date from employees")
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +52,7 @@ func (u *Users) GetAllUsers() ([]domain.User, error) {
 
 	for rows.Next() {
 		var user domain.User
-		err := rows.Scan(&user.FirstName, &user.LastName, &user.Email, &user.Birthdate)
+		err := rows.Scan(&user.Id, &user.FirstName, &user.LastName, &user.Email, &user.Birthdate)
 		if err != nil {
 			return nil, err
 		}
@@ -88,4 +90,81 @@ func (u *Users) GetAllBirthdayPeople(date string) ([]domain.User, error) {
 	}
 
 	return birthdayPeoples, nil
+}
+
+func (u *Users) SubscribePerPerson(info *domain.Subscription) error {
+	_, err := u.db.Exec("INSERT INTO subscriptions(subscriber_id, employee_id, notify_days_before) values ($1, $2, $3)",
+		info.SubsId, info.EmployeeId, info.NotifyDaysBefore)
+
+	//проверка, чо ошибка = дубль
+	if err != nil {
+		if pqErr, ok := err.(*pq.Error); ok {
+			if pqErr.Code == "23505" {
+				return storage.DuplicateSubVal
+			}
+		}
+	}
+
+	return err
+}
+
+func (u *Users) UnsubscribeFromPerson(subInfo *domain.Subscription) error {
+	var id int
+	err := u.db.QueryRow("SELECT id from subscriptions WHERE subscriber_id=$1 AND employee_id=$2", subInfo.SubsId, subInfo.EmployeeId).Scan(&id)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return storage.IdSubsDoesntExists
+		}
+		return err
+	}
+
+	_, err = u.db.Exec("DELETE FROM subscriptions WHERE subscriber_id=$1 AND employee_id=$2", subInfo.SubsId, subInfo.EmployeeId)
+	return err
+}
+
+func (u *Users) GetBirthdayNotifications() (map[string][]*domain.User, error) {
+	query := `
+        SELECT 
+            e1.email AS subscriber_email,
+            e2.id AS birthday_person_id,
+            e2.first_name AS birthday_person_first_name,
+            e2.last_name AS birthday_person_last_name,
+            e2.email AS birthday_person_email,
+            e2.birth_date AS birthday_person_birth_date
+        FROM 
+            subscriptions s
+        JOIN 
+            employees e1 ON s.subscriber_id = e1.id
+        JOIN 
+            employees e2 ON s.employee_id = e2.id
+        WHERE 
+            TO_CHAR(e2.birth_date - INTERVAL '1 day' * s.notify_days_before, 'MM-DD') = TO_CHAR(CURRENT_DATE, 'MM-DD')
+        ORDER BY 
+            e1.email;
+    `
+
+	rows, err := u.db.Query(query)
+	if err != nil {
+		return nil, fmt.Errorf("error executing query: %v", err)
+	}
+	defer rows.Close()
+
+	notifications := make(map[string][]*domain.User)
+
+	for rows.Next() {
+		var subscriberEmail string
+		birthdayPerson := &domain.User{}
+
+		if err := rows.Scan(&subscriberEmail, &birthdayPerson.Id, &birthdayPerson.FirstName, &birthdayPerson.LastName, &birthdayPerson.Email, &birthdayPerson.Birthdate); err != nil {
+			return nil, fmt.Errorf("error scanning row: %v", err)
+		}
+
+		notifications[subscriberEmail] = append(notifications[subscriberEmail], birthdayPerson)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error during row iteration: %v", err)
+	}
+
+	return notifications, nil
 }

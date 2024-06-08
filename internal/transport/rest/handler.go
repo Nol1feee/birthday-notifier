@@ -42,15 +42,10 @@ func (h *Handler) InitRouter() *gin.Engine {
 		api.POST("/create-employee", h.createUser)
 		api.DELETE("/delete-employee/:email", h.deleteUser)
 		api.GET("/all-employees", h.getAllUsers)
-		//внутренняя логика - поздравление с ДР именинника
 
-		//api.POST("/subscription-all")        //с настройкой кол-ва дней до др
-		//api.POST("/subscription-per-person") //с настройкой кол-ва дней до др | 1 запрос = 1 подписка
-		//
-		//api.POST("/unsubscribe") //в зависимости от параметра, т.е. либо 1 отдельный человек, либо все
+		api.POST("/subscription-per-person", h.subscribeToEveryone)  //с настройкой кол-ва дней до др | 1 запрос = 1 подписка
+		api.POST("/unsubscribe-per-person", h.unsubscribeFromPerson) //в зависимости от параметра, т.е. либо 1 отдельный человек, либо все
+
 	}
 	return r
 }
-
-//EMPLOYEES -> id, firstName, lastName, email, date of birthd,created_at
-//

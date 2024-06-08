@@ -28,14 +28,14 @@ func NewNotifier(cfg config.Email, usersStorage storage.Users) *Notifier {
 	return &Notifier{cfg: cfg, usersStorage: usersStorage, dialer: dialer}
 }
 
-func (n *Notifier) sendEmail(user domain.User, subject string) error {
+func (n *Notifier) sendEmail(email string, subject string, body string) error {
 	m := gomail.NewMessage()
 
 	m.SetHeader("From", n.cfg.From)
-	m.SetHeader("To", user.Email)
+	m.SetHeader("To", email)
 	m.SetHeader("Subject", subject)
 
-	m.SetBody("text/html", fmt.Sprintf(bodyHappyBirthday, user.FirstName, user.LastName))
+	m.SetBody("text/html", body)
 
 	if err := n.dialer.DialAndSend(m); err != nil {
 		logger.Error("email errors", zap.Error(err))
@@ -61,11 +61,47 @@ func (n *Notifier) CongratulateAll() error {
 	}
 
 	for _, v := range users {
-		err := n.sendEmail(v, subjectHappyBirthday)
+		body := fmt.Sprintf(bodyHappyBirthday, v.FirstName, v.LastName)
+		err := n.sendEmail(v.Email, subjectHappyBirthday, body)
 		if err != nil {
 			logger.Error("Ошибка при отправке email", zap.String(v.FirstName+v.LastName, "не получила письмо"))
 		}
 	}
 
 	return nil
+}
+
+func (n *Notifier) NotifyingUpcomingBirthdays() error {
+	notifications, err := n.usersStorage.GetBirthdayNotifications()
+	if err != nil {
+		logger.Error("Error fetching birthday notifications", zap.Error(err))
+		return err
+	}
+
+	for subscriberEmail, birthdayPeople := range notifications {
+		// Генерируем сообщение для каждого подписчика
+		body := generateNotificationBody(birthdayPeople)
+		subject := "Upcoming Birthdays Notification"
+
+		if err := n.sendEmail(subscriberEmail, subject, body); err != nil {
+			logger.Error("Failed to send notification email",
+				zap.String("subscriber_email", subscriberEmail),
+				zap.Error(err))
+			return err
+		} else {
+			logger.Info("Notification email sent successfully",
+				zap.String("subscriber_email", subscriberEmail))
+		}
+	}
+	return err
+}
+
+// generateNotificationBody формирует тело уведомления о предстоящих днях рождения
+func generateNotificationBody(birthdayPeople []*domain.User) string {
+	body := "У вас есть предстоящие дни рождения:\n<ul>"
+	for _, person := range birthdayPeople {
+		body += fmt.Sprintf("<li>%s %s - %s</li>", person.FirstName, person.LastName, person.Birthdate)
+	}
+	body += "</ul>"
+	return body
 }

@@ -21,6 +21,10 @@ func (s Email) Validate() error {
 	return validate.Struct(s)
 }
 
+func (s Subscription) Validate() error {
+	return validate.Struct(s)
+}
+
 // сотрудник компании должен быть старше 16 лет, -> валидируем
 func birthdateValidation(fl validator.FieldLevel) bool {
 	birthdateStr := fl.Field().String()

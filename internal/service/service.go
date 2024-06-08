@@ -24,3 +24,11 @@ func (u *Users) DeleteUser(email domain.Email) error {
 func (u *Users) GetAllUsers() ([]domain.User, error) {
 	return u.usersStorage.GetAllUsers()
 }
+
+func (u *Users) SubscribePerPerson(subInfo *domain.Subscription) error {
+	return u.usersStorage.SubscribePerPerson(subInfo)
+}
+
+func (u *Users) UnsubscribeFromPerson(subInfo *domain.Subscription) error {
+	return u.usersStorage.UnsubscribeFromPerson(subInfo)
+}
