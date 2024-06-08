@@ -2,7 +2,6 @@ package rest
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -23,8 +22,11 @@ func (h *Handler) createUser(ctx *gin.Context) {
 		return
 	}
 
-	//доп. обработка ошибки, т.к. быть может такой email существует
 	if err := h.usersService.CreateUser(user); err != nil {
+		if err.Error() == duplicateEmail.Error() {
+			ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": duplicateEmailResp})
+			return
+		}
 		ctx.AbortWithStatus(http.StatusInternalServerError)
 		logger.Error(err.Error())
 		return
@@ -43,7 +45,6 @@ func (h *Handler) deleteUser(ctx *gin.Context) {
 	}
 
 	if err := h.usersService.DeleteUser(email); err != nil {
-		fmt.Println(err, storage.EmailDoesntExits)
 		if errors.Is(err, storage.EmailDoesntExits) {
 			ctx.AbortWithStatusJSON(http.StatusBadRequest, storage.EmailDoesntExits.Error())
 			return
@@ -57,7 +58,14 @@ func (h *Handler) deleteUser(ctx *gin.Context) {
 
 }
 
-// 2 min, little chill
 func (h *Handler) getAllUsers(ctx *gin.Context) {
+	users, err := h.usersService.GetAllUsers()
 
+	if err != nil {
+		logger.Error(err.Error())
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, users)
 }

@@ -2,12 +2,10 @@ http:
   host: "localhost"
   port: 8080
 
-#db:
-#  port: 5432
-#  host: "127.0.0.1" # to connect to localhost from dockercontainer
-#  dbname: "birthdayNotifier"
-#  user: "rutube"
-#  password: "qwerty123"
-#  sslmode: "disable"
+email:
+  host: "smtp.gmail.com"
+  port: 587
+  from: vladrazd00@gmail.com
+  #пароль в .env файле
 
 log_mode: "dev" #dev || prod

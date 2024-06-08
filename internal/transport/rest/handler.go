@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/gin-gonic/gin"
@@ -15,9 +16,11 @@ var (
 			"2. имя и фамилия содержат от 2 до 25 символов.<br>" +
 			"3. поле email валидируется, так что сервис ожидает стандартный формат email'a!<br>",
 	)
-	userCreated    = "Сотрудник успешно добавлен в БД!"
-	userDeleted    = "Сотрудник успешно удален!"
-	incorrectEmail = "Некорректный формал email адреса"
+	userCreated        = "Сотрудник успешно добавлен в БД!"
+	userDeleted        = "Сотрудник успешно удален!"
+	incorrectEmail     = "Некорректный формал email адреса"
+	duplicateEmail     = errors.New("pq: duplicate key value violates unique constraint \"employees_email_key\"")
+	duplicateEmailResp = "Пользователь с таким email'ом уже существует, попробуй другой адрес почты."
 )
 
 type Handler struct {
@@ -29,6 +32,8 @@ func NewHandler(usersService *service.Users) *Handler {
 }
 
 func (h *Handler) InitRouter() *gin.Engine {
+	gin.SetMode(gin.ReleaseMode) //todo fix
+
 	r := gin.New()
 	r.Use(loggerMiddleware())
 

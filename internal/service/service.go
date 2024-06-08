@@ -20,3 +20,7 @@ func (u *Users) CreateUser(user *domain.User) error {
 func (u *Users) DeleteUser(email domain.Email) error {
 	return u.usersStorage.DeleteUser(email)
 }
+
+func (u *Users) GetAllUsers() ([]domain.User, error) {
+	return u.usersStorage.GetAllUsers()
+}

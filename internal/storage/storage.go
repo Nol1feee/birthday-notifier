@@ -17,4 +17,6 @@ var (
 type Users interface {
 	CreateUser(user domain.User) error
 	DeleteUser(email domain.Email) error
+	GetAllUsers() ([]domain.User, error)
+	GetAllBirthdayPeople(date string) ([]domain.User, error)
 }

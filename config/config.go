@@ -11,14 +11,22 @@ import (
 )
 
 type Config struct {
-	DB   postgres.DB
-	HTTP HTTP `yaml:"http"`
+	DB    postgres.DB
+	HTTP  HTTP `yaml:"http"`
+	Email `yaml:"email"`
 }
 
 type (
 	HTTP struct {
 		Host string `env-required:"true" yaml:"host" env:"HTTP_HOST"`
 		Port int    `env-required:"true" yaml:"port" env:"HTTP_PORT"`
+	}
+
+	Email struct {
+		Host string `yaml:"host"`
+		Port int    `yaml:"port"`
+		From string `yaml:"from"`
+		Pass string `env-required:"true" env:"EMAIL_PASS"`
 	}
 )
 
