@@ -57,6 +57,8 @@ email:
 
 log_mode: "dev"          # dev || prod
 ```
+2.**Run Docker** <br>
+3.**Execute the `make` command**
 - - -
 ## Example Requests
 Detailed documentation is available at the following [link](https://documenter.getpostman.com/view/27531074/2sA3XLDiRv)
