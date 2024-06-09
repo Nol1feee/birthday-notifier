@@ -57,7 +57,7 @@ email:
 
 log_mode: "dev"          # dev || prod
 ```
-2.**Run Docker** <br>
+2.**Run Docker, in the project root, run the command 'docker compose up -d'** <br>
 3.**Execute the `make` command**
 - - -
 ## Example Requests
