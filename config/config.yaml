@@ -3,9 +3,8 @@ http:
   port: 8080
 
 email:
-  host: "smtp.gmail.com"
-  port: 587
-  from: vladrazd00@gmail.com
-  #пароль в .env файле
+  host: "smtp.gmail.com" #стандартный хост, если используете google
+  port: 587              #стандартный порт для smtp
+  from:                  #email адрес, с которого будут отправлены уведомления
 
-log_mode: "dev" #dev || prod
+log_mode: "dev"          #dev || prod
