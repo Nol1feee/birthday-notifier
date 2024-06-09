@@ -7,7 +7,7 @@
         A service written in Golang for congratulating birthday celebrants and notifying about upcoming birthdays.
     </h5>
     <p>
-        <a href="README.md">English</a> | Russian
+        English | <a href="README.ru.md">Russian</a>
     </p>
 </div>
 
