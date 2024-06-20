@@ -20,8 +20,8 @@ type Users interface {
 	CreateUser(user domain.User) error
 	DeleteUser(email domain.Email) error
 	GetAllUsers() ([]domain.User, error)
-	GetAllBirthdayPeople(date string) ([]domain.User, error) //вынести в иной интерфей
+	GetAllBirthdayPeople(date string) ([]domain.User, error)
 	SubscribePerPerson(subsInfo *domain.Subscription) error
 	UnsubscribeFromPerson(subInfo *domain.Subscription) error
-	GetBirthdayNotifications() (map[string][]*domain.User, error) //вынести в нией интерфейс
+	GetBirthdayNotifications() (map[string][]*domain.User, error)
 }

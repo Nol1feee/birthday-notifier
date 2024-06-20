@@ -15,6 +15,7 @@ import (
 var (
 	subjectHappyBirthday = "happy birthday"
 	bodyHappyBirthday    = "Дорогой %s %s, мы поздравляем тебя с днем рождения!"
+	upcomingBirthdays    = "У вас есть предстоящие дни рождения:\n<ul>"
 )
 
 type Notifier struct {
@@ -79,7 +80,6 @@ func (n *Notifier) NotifyingUpcomingBirthdays() error {
 	}
 
 	for subscriberEmail, birthdayPeople := range notifications {
-		// Генерируем сообщение для каждого подписчика
 		body := generateNotificationBody(birthdayPeople)
 		subject := "Upcoming Birthdays Notification"
 
@@ -88,17 +88,15 @@ func (n *Notifier) NotifyingUpcomingBirthdays() error {
 				zap.String("subscriber_email", subscriberEmail),
 				zap.Error(err))
 			return err
-		} else {
-			logger.Info("Notification email sent successfully",
-				zap.String("subscriber_email", subscriberEmail))
 		}
+		logger.Info("Notification email sent successfully",
+			zap.String("subscriber_email", subscriberEmail))
 	}
 	return err
 }
 
-// generateNotificationBody формирует тело уведомления о предстоящих днях рождения
 func generateNotificationBody(birthdayPeople []*domain.User) string {
-	body := "У вас есть предстоящие дни рождения:\n<ul>"
+	body := upcomingBirthdays
 	for _, person := range birthdayPeople {
 		body += fmt.Sprintf("<li>%s %s - %s</li>", person.FirstName, person.LastName, person.Birthdate)
 	}
