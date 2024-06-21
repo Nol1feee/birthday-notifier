@@ -1,6 +1,7 @@
 package psql
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 
@@ -18,14 +19,14 @@ func NewUsers(db *sql.DB) *Users {
 	return &Users{db: db}
 }
 
-func (u *Users) CreateUser(user domain.User) error {
+func (u *Users) CreateUser(ctx context.Context, user domain.User) error {
 	_, err := u.db.Exec("INSERT INTO employees (first_name, last_name, email, birth_date) values ($1, $2, $3, $4)",
 		user.FirstName, user.LastName, user.Email, user.Birthdate)
 
 	return err
 }
 
-func (u *Users) DeleteUser(email domain.Email) error {
+func (u *Users) DeleteUser(ctx context.Context, email domain.Email) error {
 	err := u.db.QueryRow("SELECT email from employees WHERE email=$1)", email.Email).Err()
 	if err == nil {
 		_, err = u.db.Exec("DELETE FROM employees WHERE email=$1", email.Email)
@@ -35,7 +36,7 @@ func (u *Users) DeleteUser(email domain.Email) error {
 	return storage.EmailDoesntExits
 }
 
-func (u *Users) GetAllUsers() ([]domain.User, error) {
+func (u *Users) GetAllUsers(ctx context.Context) ([]domain.User, error) {
 	//2 запроса к БД, но append не перевыделяет память
 	var count int
 	err := u.db.QueryRow("SELECT COUNT(*) FROM employees").Scan(&count)
@@ -62,7 +63,7 @@ func (u *Users) GetAllUsers() ([]domain.User, error) {
 	return users, nil
 }
 
-func (u *Users) GetAllBirthdayPeople(date string) ([]domain.User, error) {
+func (u *Users) GetAllBirthdayPeople(ctx context.Context, date string) ([]domain.User, error) {
 	//2 запроса к БД, но append не перевыделяет память
 	var count int
 	err := u.db.QueryRow("SELECT COUNT(*) FROM employees WHERE TO_CHAR(birth_date, 'MM-DD') = $1", date).Scan(&count)
@@ -92,7 +93,7 @@ func (u *Users) GetAllBirthdayPeople(date string) ([]domain.User, error) {
 	return birthdayPeoples, nil
 }
 
-func (u *Users) SubscribePerPerson(info *domain.Subscription) error {
+func (u *Users) SubscribePerPerson(ctx context.Context, info *domain.Subscription) error {
 	_, err := u.db.Exec("INSERT INTO subscriptions(subscriber_id, employee_id, notify_days_before) values ($1, $2, $3)",
 		info.SubsId, info.EmployeeId, info.NotifyDaysBefore)
 
@@ -108,7 +109,7 @@ func (u *Users) SubscribePerPerson(info *domain.Subscription) error {
 	return err
 }
 
-func (u *Users) UnsubscribeFromPerson(subInfo *domain.Subscription) error {
+func (u *Users) UnsubscribeFromPerson(ctx context.Context, subInfo *domain.Subscription) error {
 	var id int
 	err := u.db.QueryRow("SELECT id from subscriptions WHERE subscriber_id=$1 AND employee_id=$2", subInfo.SubsId, subInfo.EmployeeId).Scan(&id)
 	if err != nil {
@@ -122,7 +123,7 @@ func (u *Users) UnsubscribeFromPerson(subInfo *domain.Subscription) error {
 	return err
 }
 
-func (u *Users) GetBirthdayNotifications() (map[string][]*domain.User, error) {
+func (u *Users) GetBirthdayNotifications(ctx context.Context) (map[string][]*domain.User, error) {
 	query := `
         SELECT 
             e1.email AS subscriber_email,

@@ -1,7 +1,9 @@
 package service
 
 import (
+	"context"
 	"fmt"
+	"time"
 
 	"go.uber.org/zap"
 	"gopkg.in/gomail.v2"
@@ -46,14 +48,17 @@ func (n *Notifier) sendEmail(email string, subject string, body string) error {
 	return nil
 }
 
-func (n *Notifier) CongratulateAll() error {
+func (n *Notifier) CongratulateAll(ctx context.Context) error {
+	ctx, cancel := context.WithTimeout(ctx, time.Minute) //условно
+	defer cancel()
+
 	todayDate, err := today()
 	if err != nil {
 		logger.Error("get today")
 		return err
 	}
 
-	users, err := n.usersStorage.GetAllBirthdayPeople(todayDate)
+	users, err := n.usersStorage.GetAllBirthdayPeople(ctx, todayDate)
 	logger.Debug("get all today's birthday",
 		zap.String("peoples - ", fmt.Sprintf("%v", users)))
 	if err != nil {
@@ -72,8 +77,11 @@ func (n *Notifier) CongratulateAll() error {
 	return nil
 }
 
-func (n *Notifier) NotifyingUpcomingBirthdays() error {
-	notifications, err := n.usersStorage.GetBirthdayNotifications()
+func (n *Notifier) NotifyingUpcomingBirthdays(ctx context.Context) error {
+	ctx, cancel := context.WithTimeout(ctx, time.Minute) //условно
+	defer cancel()
+
+	notifications, err := n.usersStorage.GetBirthdayNotifications(ctx)
 	if err != nil {
 		logger.Error("Error fetching birthday notifications", zap.Error(err))
 		return err

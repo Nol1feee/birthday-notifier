@@ -22,7 +22,7 @@ func (h *Handler) createUser(ctx *gin.Context) {
 		return
 	}
 
-	if err := h.usersService.CreateUser(user); err != nil {
+	if err := h.usersService.CreateUser(ctx, user); err != nil {
 		if err.Error() == duplicateEmail.Error() {
 			ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": duplicateEmailResp})
 			return
@@ -44,7 +44,7 @@ func (h *Handler) deleteUser(ctx *gin.Context) {
 		return
 	}
 
-	if err := h.usersService.DeleteUser(email); err != nil {
+	if err := h.usersService.DeleteUser(ctx, email); err != nil {
 		if errors.Is(err, storage.EmailDoesntExits) {
 			ctx.AbortWithStatusJSON(http.StatusBadRequest, storage.EmailDoesntExits.Error())
 			return
@@ -59,7 +59,7 @@ func (h *Handler) deleteUser(ctx *gin.Context) {
 }
 
 func (h *Handler) getAllUsers(ctx *gin.Context) {
-	users, err := h.usersService.GetAllUsers()
+	users, err := h.usersService.GetAllUsers(ctx)
 
 	if err != nil {
 		logger.Error(err.Error())

@@ -20,6 +20,8 @@ import (
 )
 
 func Run(cfg *config.Config) {
+	ctx := context.Background()
+
 	logger.Debug("cfg info", zap.String("cfg", fmt.Sprintf("%+v", cfg)))
 
 	/* INIT pg db */
@@ -36,7 +38,7 @@ func Run(cfg *config.Config) {
 	usersRepo := psql.NewUsers(db)
 	usersService := service.NewUsers(usersRepo)
 	notifierService := service.NewNotifier(cfg.Email, usersRepo)
-	notifierService.NotifyingUpcomingBirthdays()
+	notifierService.NotifyingUpcomingBirthdays(ctx)
 
 	handler := rest.NewHandler(usersService)
 
@@ -52,10 +54,10 @@ func Run(cfg *config.Config) {
 	/* INIT cron notifier */
 	c := cron.New(cron.WithLocation(time.FixedZone("MSK", 3*60*60)))
 	_, err = c.AddFunc("0 7 * * *", func() {
-		if err := notifierService.CongratulateAll(); err != nil {
+		if err := notifierService.CongratulateAll(ctx); err != nil {
 			logger.Error("Error in CongratulateAll", zap.Error(err))
 		}
-		if err := notifierService.NotifyingUpcomingBirthdays(); err != nil {
+		if err := notifierService.NotifyingUpcomingBirthdays(ctx); err != nil {
 			logger.Error("Error in NotifyingUpcomingBirthdays", zap.Error(err))
 		}
 	})

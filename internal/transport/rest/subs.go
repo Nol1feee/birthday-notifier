@@ -29,7 +29,7 @@ func (h *Handler) subscribeToEveryone(ctx *gin.Context) {
 		return
 	}
 
-	if err := h.usersService.SubscribePerPerson(subs); err != nil {
+	if err := h.usersService.SubscribePerPerson(ctx, subs); err != nil {
 		if err == storage.DuplicateSubVal {
 			ctx.JSON(http.StatusBadRequest, gin.H{"error": "Подобная связь была создана ранее"})
 			return
@@ -54,7 +54,7 @@ func (h *Handler) unsubscribeFromPerson(ctx *gin.Context) {
 		return
 	}
 
-	if err := h.usersService.UnsubscribeFromPerson(subs); err != nil {
+	if err := h.usersService.UnsubscribeFromPerson(ctx, subs); err != nil {
 		if err == storage.IdSubsDoesntExists {
 			ctx.JSON(http.StatusBadRequest, gin.H{"error": "Подобная связь была создана ранее или айди не существуют"})
 			return
