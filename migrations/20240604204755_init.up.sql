@@ -1,3 +1,5 @@
+-- TODO: serial, not random file name
+
 CREATE TABLE IF NOT EXISTS employees (
     id SERIAL PRIMARY KEY,
     first_name VARCHAR(100) NOT NULL,

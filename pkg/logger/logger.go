@@ -12,17 +12,18 @@ type Config struct {
 	Mode string `yaml:"log_mode" env-default:"dev"`
 }
 
-const (
-	envDev  = "dev"
-	envProd = "prod"
-)
-
 var globalLogger *zap.Logger
 
 func init() {
+	const (
+		envDev      = "dev"
+		envProd     = "prod"
+		defaultPath = "./config/config.yaml"
+	)
+
 	log := &Config{}
 
-	err := cleanenv.ReadConfig("./config/config.yaml", log)
+	err := cleanenv.ReadConfig(defaultPath, log)
 	if err != nil {
 		fmt.Printf("logger error - %s\n", err)
 		os.Exit(1)

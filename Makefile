@@ -1,3 +1,4 @@
+# TODO: rewrite to Taskfile(https://taskfile.dev/)
 include .env
 
 .PHONY: run
