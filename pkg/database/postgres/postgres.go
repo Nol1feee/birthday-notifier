@@ -28,6 +28,9 @@ type DB struct {
 	SSLMode  string `yaml:"sslmode"  env:"DB_SSLMODE" env-default:"disable"`
 }
 
+// NewPostgresConnection creates and verifies a PostgreSQL database connection based on cfg.
+// On success it returns an opened *sql.DB ready for use. If the database cannot be opened
+// or connectivity cannot be verified via ping, it returns a non-nil error describing the failure.
 func NewPostgresConnection(cfg DB) (*sql.DB, error) {
 	dsn := fmt.Sprintf("host=%s port=%d user=%s dbname=%s sslmode=%s password=%s",
 		cfg.Host, cfg.Port, cfg.User, cfg.Name, cfg.SSLMode, cfg.Password)
@@ -44,7 +47,8 @@ func NewPostgresConnection(cfg DB) (*sql.DB, error) {
 	return db, nil
 }
 
-// TODO: вынести в docker-compose || скрипт, т.к. это ЗО инфры, не кода
+// MigrateDB runs file-based migrations from pathMigrations against the database named in cfg using the provided *sql.DB.
+// It logs a fatal error and terminates the process if driver creation, migration setup, or the migration run fails for reasons other than migrate.ErrNoChange; if migrations are applied successfully it logs an informational message.
 func MigrateDB(db *sql.DB, cfg DB) {
 	driver, err := postgres.WithInstance(db, &postgres.Config{})
 	if err != nil {

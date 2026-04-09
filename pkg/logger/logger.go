@@ -14,6 +14,10 @@ type Config struct {
 
 var globalLogger *zap.Logger
 
+// init initializes the package logger by reading configuration from ./config/config.yaml
+// and configuring the global logger according to the Config.Mode.
+// It prints an error and exits the process if configuration cannot be read; if the mode is unrecognized
+// it prints an error and leaves globalLogger unset.
 func init() {
 	const (
 		envDev      = "dev"

@@ -19,7 +19,11 @@ import (
 	"github.com/Nol1feee/birthday-notifier/pkg/logger"
 )
 
-// TODO: разбить функцию, мб переехать на DI (dig, etc..)
+// Run initializes application components (database, services, HTTP server, and cron notifier),
+// starts background processes, and blocks until an OS shutdown signal is received to perform a
+// graceful shutdown.
+//
+// The provided cfg supplies configuration for the database, HTTP server, and email notifier.
 func Run(cfg *config.Config) {
 	ctx := context.Background()
 
