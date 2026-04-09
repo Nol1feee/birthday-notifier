@@ -44,6 +44,7 @@ func NewPostgresConnection(cfg DB) (*sql.DB, error) {
 	return db, nil
 }
 
+// TODO: вынести в docker-compose || скрипт, т.к. это ЗО инфры, не кода
 func MigrateDB(db *sql.DB, cfg DB) {
 	driver, err := postgres.WithInstance(db, &postgres.Config{})
 	if err != nil {

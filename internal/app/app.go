@@ -19,6 +19,7 @@ import (
 	"github.com/Nol1feee/birthday-notifier/pkg/logger"
 )
 
+// TODO: разбить функцию, мб переехать на DI (dig, etc..)
 func Run(cfg *config.Config) {
 	ctx := context.Background()
 
@@ -61,7 +62,6 @@ func Run(cfg *config.Config) {
 			logger.Error("Error in NotifyingUpcomingBirthdays", zap.Error(err))
 		}
 	})
-
 	if err != nil {
 		logger.Error("Error scheduling cron job", zap.Error(err))
 		return
